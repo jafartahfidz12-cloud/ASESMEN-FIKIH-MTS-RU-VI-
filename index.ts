@@ -7,20 +7,22 @@ Deno.serve(async req=>{
  if(req.method==="OPTIONS")return new Response("ok",{headers:cors});
  if(req.method!=="POST")return json({error:"Gunakan POST."},405);
  try{
-  const b=await req.json();const name=String(b.name||"").trim(),klass=String(b.klass||"").trim(),participant_no=String(b.participant_no||"").trim(),school_year=String(b.school_year||"2026/2027").trim(),pin=String(b.pin||"").trim();
-  if(!name||!klass||!participant_no)return json({error:"Nama, kelas, dan nomor peserta wajib diisi."},400);
-  const {data:settings,error:se}=await db.from("pengaturan_ujian").select("*").eq("status_aktif",true).order("id",{ascending:false}).limit(1).maybeSingle();
-  if(se)throw se;
-  if(settings?.tanggal_mulai&&new Date(settings.tanggal_mulai)>new Date())return json({error:"Ujian belum dibuka."},403);
-  if(settings?.tanggal_selesai&&new Date(settings.tanggal_selesai)<new Date())return json({error:"Waktu pelaksanaan ujian telah berakhir."},403);
-  if(settings?.pin_akses&&settings.pin_akses!==pin)return json({error:"PIN ujian tidak sesuai."},403);
-  const {data:existing,error:ee}=await db.from("participants").select("id").eq("participant_no",participant_no).maybeSingle();
-  if(ee)throw ee;if(existing)return json({error:"Nomor peserta ini sudah pernah digunakan. Hubungi pengawas."},409);
-  const {data:bank,error:qe}=await db.from("soal_fikih").select("id,pertanyaan,pilihan_a,pilihan_b,pilihan_c,pilihan_d,kategori,urutan").eq("aktif",true).order("urutan",{ascending:true,nullsFirst:false}).order("id",{ascending:true}).limit(50);
-  if(qe)throw qe;if(!bank||bank.length!==50)return json({error:`Bank soal aktif harus tepat 50 soal. Saat ini ditemukan ${bank?.length||0}. Impor file seed-soal.sql terlebih dahulu.`},409);
-  const access_token=crypto.randomUUID()+"-"+crypto.randomUUID(),access_token_hash=await hash(access_token);
-  const {data:p,error:pe}=await db.from("participants").insert({name,klass,participant_no,school_year,access_token_hash}).select("id,name,klass,participant_no,school_year,started_at").single();
-  if(pe){if(pe.code==="23505")return json({error:"Nomor peserta sudah digunakan."},409);throw pe}
-  return json({participant:p,access_token,questions:bank,duration_minutes:settings?.durasi_menit||90,exam_name:settings?.nama_ujian||"Asesmen Fikih 2026"});
- }catch(e){console.error(e);return json({error:"Server gagal memulai ujian. Periksa tabel Supabase dan Edge Function."},500)}
+  const {access_token,answers,auto_submit=false}=await req.json();
+  if(!access_token||!Array.isArray(answers))return json({error:"Sesi atau jawaban tidak lengkap."},400);
+  const tokenHash=await hash(String(access_token));
+  const {data:p,error:pe}=await db.from("participants").select("*").eq("access_token_hash",tokenHash).single();
+  if(pe||!p)return json({error:"Sesi peserta tidak ditemukan."},401);
+  if(p.submitted_at)return json({error:"Jawaban peserta ini sudah dikumpulkan."},409);
+  const {data:bank,error:qe}=await db.from("soal_fikih").select("id,kunci_jawaban").eq("aktif",true).order("urutan",{ascending:true,nullsFirst:false}).order("id",{ascending:true}).limit(50);
+  if(qe)throw qe;if(!bank||bank.length!==50)return json({error:"Bank soal aktif tidak berjumlah 50."},409);
+  const given=new Map<number,string>();
+  for(const a of answers){const id=Number(a.question_id);if(Number.isInteger(id)&&typeof a.answer==="string"&&"ABCD".includes(a.answer.toUpperCase()))given.set(id,a.answer.toUpperCase())}
+  const rows=[];let correct=0,wrong=0,unanswered=0;
+  for(const q of bank){const ans=given.get(Number(q.id))||null;const ok=!!ans&&ans===String(q.kunci_jawaban).trim().toUpperCase();if(ok)correct++;else if(ans)wrong++;else unanswered++;rows.push({participant_id:p.id,question_id:Number(q.id),answer_text:ans,is_correct:ok})}
+  const {error:ae}=await db.from("submission_answers").insert(rows);if(ae)throw ae;
+  const score=Math.round(correct/50*100);
+  const {data:updated,error:ue}=await db.from("participants").update({submitted_at:new Date().toISOString(),correct,wrong,unanswered,score,auto_submitted:!!auto_submit}).eq("id",p.id).is("submitted_at",null).select("id").maybeSingle();
+  if(ue||!updated){await db.from("submission_answers").delete().eq("participant_id",p.id);return json({error:"Pengumpulan gagal atau jawaban sudah pernah dikirim."},409)}
+  return json({result:{name:p.name,klass:p.klass,participant_no:p.participant_no,correct,wrong,unanswered,score,auto_submitted:!!auto_submit}});
+ }catch(e){console.error(e);return json({error:"Terjadi kesalahan saat mengoreksi atau menyimpan jawaban."},500)}
 });
