@@ -79,33 +79,18 @@ const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
   }
 });
 const $=id=>document.getElementById(id);
-const fn=(name,body,token)=>fetch(
-  `${SUPABASE_URL}/functions/v1/${name}`,
-  {
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      "apikey":SUPABASE_ANON_KEY,
-     "Authorization":"Bearer "+(token || SUPABASE_ANON_KEY)
-    },
-    body:JSON.stringify(body)
-  }
-).then(async r=>{
-  let d=await r.json().catch(()=>({}));
+const fn=(name,body,token)=>fetch(`${SUPABASE_URL}/functions/v1/${name}`,{
+  method:"POST",
+  headers:{
+    "Content-Type":"application/json",
+    "apikey":SUPABASE_ANON_KEY,
+    "Authorization":"Bearer "+(token||SUPABASE_ANON_KEY)
+  },
+  body:JSON.stringify(body)
+}).then(async r=>{
+  const d=await r.json().catch(()=>({}));
   if(!r.ok)throw Error(d.error||`Permintaan gagal (${r.status})`);
   return d;
-});
-method:"POST",
-headers:{
-"Content-Type":"application/json",
-"apikey":SUPABASE_ANON_KEY,
-"Authorization":`Bearer ${token||SUPABASE_ANON_KEY}`
-},
-body:JSON.stringify(body)
-}).then(async r=>{
-let d=await r.json().catch(()=>({}));
-if(!r.ok)throw Error(d.error||`Permintaan gagal (${r.status})`);
-return d
 });
 function show(id){["welcome","exam","result","admin"].forEach(x=>$(x).classList.toggle("hidden",x!==id));window.scrollTo(0,0)}
 function message(id,text,kind="error"){$(id).innerHTML=`<div class="${kind}">${text}</div>`}
