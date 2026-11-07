@@ -53,7 +53,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;b
 </main>
 <script>
 const SUPABASE_URL="https://cpmbdmujazeahhjidbpi.supabase.co";
-const SUPABASE_ANON_KEY="sb_publishable_tOtLN_Par59_uw0PRyLkPw_vjCePMw9";
+const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNwbWJkbXVqYXplYWhoamlkYnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM5NzYyMTcsImV4cCI6MjEwOTU1MjIxN30.oq7JWQpYNX-YBdG8DXcbVIx5nw1J8d7vhOJU7TLzaOE";
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 const $=id=>document.getElementById(id);
 const fn=(name,body,token)=>fetch(`${SUPABASE_URL}/functions/v1/${name}`,{method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_ANON_KEY,...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify(body)}).then(async r=>{let d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||`Permintaan gagal (${r.status})`);return d});
