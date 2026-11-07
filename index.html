@@ -55,6 +55,29 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;b
 const SUPABASE_URL="https://cpmbdmujazeahhjidbpi.supabase.co";
 const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNwbWJkbXVqYXplYWhoamlkYnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM5NzYyMTcsImV4cCI6MjEwOTU1MjIxN30.oq7JWQpYNX-YBdG8DXcbVIx5nw1J8d7vhOJU7TLzaOE";
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+ sb.auth.onAuthStateChange((event, session) => {
+  if (event === "PASSWORD_RECOVERY") {
+    setTimeout(async () => {
+      const newPassword = prompt("Masukkan password baru (minimal 8 karakter):");
+
+      if (!newPassword || newPassword.length < 8) {
+        alert("Password minimal 8 karakter. Silakan ulangi proses reset.");
+        return;
+      }
+
+      const { error } = await sb.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) {
+        alert("Gagal mengubah password: " + error.message);
+      } else {
+        alert("Password berhasil diperbarui. Silakan login kembali.");
+        await sb.auth.signOut();
+      }
+    }, 500);
+  }
+});
 const $=id=>document.getElementById(id);
 const fn=(name,body,token)=>fetch(`${SUPABASE_URL}/functions/v1/${name}`,{method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_ANON_KEY,...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify(body)}).then(async r=>{let d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||`Permintaan gagal (${r.status})`);return d});
 let questions=[],answers={},current=0,accessToken="",deadline=0,timerHandle=null;
