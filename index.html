@@ -79,8 +79,19 @@ const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
   }
 });
 const $=id=>document.getElementById(id);
-const fn=(name,body,token)=>fetch(`${SUPABASE_URL}/functions/v1/${name}`,{method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_ANON_KEY,...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify(body)}).then(async r=>{let d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||`Permintaan gagal (${r.status})`);return d});
-let questions=[],answers={},current=0,accessToken="",deadline=0,timerHandle=null;
+const fn=(name,body,token)=>fetch(`${SUPABASE_URL}/functions/v1/${name}`,{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+"apikey":SUPABASE_ANON_KEY,
+"Authorization":`Bearer ${token||SUPABASE_ANON_KEY}`
+},
+body:JSON.stringify(body)
+}).then(async r=>{
+let d=await r.json().catch(()=>({}));
+if(!r.ok)throw Error(d.error||`Permintaan gagal (${r.status})`);
+return d
+});
 function show(id){["welcome","exam","result","admin"].forEach(x=>$(x).classList.toggle("hidden",x!==id));window.scrollTo(0,0)}
 function message(id,text,kind="error"){$(id).innerHTML=`<div class="${kind}">${text}</div>`}
 function saveLocal(){localStorage.setItem("fikih_session",JSON.stringify({accessToken,questions,answers,current,deadline,identity:{name:$("name").value,klass:$("klass").value,participant_no:$("participantNo").value,school_year:$("schoolYear").value}}))}
