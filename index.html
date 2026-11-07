@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Asesmen Fikih Online 2026 | MTs Raudlatul Ulum VI</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--navy:#102b50;--navy2:#173d6b;--blue:#2563a6;--gold:#e8bd55;--bg:#f2f5fa;--ink:#14243a;--muted:#66758a;--white:#fff;--line:#dce4ef}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Inter,system-ui,Arial,sans-serif;color:var(--ink)}
+header{background:linear-gradient(110deg,var(--navy),var(--navy2));color:white;padding:20px max(22px,calc((100% - 1120px)/2));border-bottom:4px solid var(--gold);display:flex;justify-content:space-between;align-items:center;gap:16px}
+.brand{font-weight:800;font-size:18px}.sub{color:#cbd8e8;font-size:13px;margin-top:4px}
+main{max-width:1120px;margin:32px auto;padding:0 18px}.panel{background:white;border:1px solid var(--line);border-radius:20px;padding:28px;box-shadow:0 12px 35px #17365b0c}
+h1{margin:0 0 8px;font-size:28px;color:var(--navy)}h2{margin:0 0 14px;color:var(--navy)}p{color:var(--muted);line-height:1.6}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.field label{display:block;font-weight:700;margin:0 0 7px}.field input,.field select{width:100%;padding:14px;border:1px solid var(--line);border-radius:12px;font:inherit;background:#fff}
+.btn{border:0;background:var(--navy);color:white;font-weight:800;border-radius:12px;padding:14px 20px;cursor:pointer}.btn:hover{background:var(--blue)}.btn.gold{background:var(--gold);color:var(--navy)}.btn.light{background:#eaf0f8;color:var(--navy)}.btn:disabled{opacity:.5;cursor:not-allowed}
+.hidden{display:none!important}.note{background:#edf4fc;border-left:4px solid var(--blue);padding:13px 15px;border-radius:9px;color:#28415e;margin:18px 0}
+.error{color:#a52b2b;background:#fff0f0;padding:12px;border-radius:10px}.success{color:#12613d;background:#eaf8f0;padding:12px;border-radius:10px}
+.topline{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}.pill{background:#eaf0f8;color:var(--navy);padding:8px 12px;border-radius:30px;font-weight:700}
+.question{border:1px solid var(--line);border-radius:16px;padding:22px;margin:18px 0}.qhead{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;font-weight:700}.qtext{font-size:19px;font-weight:750;line-height:1.5;margin:14px 0}
+.option{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:13px;margin:9px 0;cursor:pointer}.option:has(input:checked){border-color:var(--blue);background:#edf4fc}.option input{margin-top:4px;accent-color:var(--blue)}
+.navgrid{display:grid;grid-template-columns:repeat(10,1fr);gap:7px;margin-top:18px}.navgrid button{border:1px solid var(--line);border-radius:8px;padding:8px;background:white;cursor:pointer}.navgrid button.done{background:#dcecff;border-color:#7eaddc}.navgrid button.current{outline:2px solid var(--gold)}
+.actions{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:18px}.statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{background:#f1f5fa;border-radius:14px;padding:16px}.stat b{display:block;font-size:25px;color:var(--navy)}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;border-bottom:1px solid var(--line);padding:11px 8px}th{color:var(--navy)}
+@media(max-width:700px){.grid{grid-template-columns:1fr}.panel{padding:20px}.statgrid{grid-template-columns:1fr 1fr}.navgrid{grid-template-columns:repeat(5,1fr)}header{padding:16px}.qtext{font-size:17px}}
+</style></head><body>
+<header><div><div class="brand">ASESMEN FIKIH ONLINE 2026</div><div class="sub">MTs Raudlatul Ulum VI · Tahun Ajaran 2026/2027</div></div><button class="btn light" id="adminToggle">ADMIN</button></header>
+<main>
+<section id="welcome" class="panel">
+<h1>ASESMEN FIKIH</h1><p>Thaharah dan Salat · 50 soal · 90 menit · Pilihan A–D</p>
+<div class="note">Kerjakan secara mandiri dan teliti. Pastikan identitas benar sebelum memulai. Jawaban akan dikirim dan dinilai secara otomatis.</div>
+<div class="grid">
+<div class="field"><label>Nama lengkap</label><input id="name" placeholder="Masukkan nama lengkap" maxlength="100"></div>
+<div class="field"><label>Kelas</label><select id="klass"><option value="">Pilih kelas</option><option>VII A</option><option>VII B</option><option>VII C</option><option>VIII A</option><option>VIII B</option><option>VIII C</option><option>IX A</option><option>IX B</option><option>IX C</option></select></div>
+<div class="field"><label>Nomor peserta ujian</label><input id="participantNo" placeholder="Contoh: 001" maxlength="30"></div>
+<div class="field"><label>Tahun ajaran</label><input id="schoolYear" value="2026/2027"></div>
+<div class="field"><label>PIN ujian (jika diberikan pengawas)</label><input id="examPin" placeholder="Boleh dikosongkan jika tidak ada"></div>
+</div><div class="actions"><button class="btn gold" id="startBtn">MULAI MENGERJAKAN</button></div><div id="welcomeMsg"></div>
+</section>
+<section id="exam" class="panel hidden">
+<div class="topline"><div><h2>Ujian Fikih</h2><div class="sub" style="color:var(--muted)">Jawab semua soal, lalu tekan kumpulkan.</div></div><div class="pill">Sisa waktu: <span id="timer">90:00</span></div></div>
+<div class="topline"><span class="pill" id="progress">Soal 1 dari 50</span><span class="pill" id="answered">Terjawab 0/50</span></div>
+<div id="questionArea"></div>
+<div class="actions"><button class="btn light" id="prevBtn">SEBELUMNYA</button><button class="btn" id="nextBtn">BERIKUTNYA</button></div>
+<div class="navgrid" id="navGrid"></div>
+<div class="actions"><button class="btn gold" id="submitBtn">KUMPULKAN JAWABAN</button></div><div id="examMsg"></div>
+</section>
+<section id="result" class="panel hidden"><h1>Asesmen selesai</h1><div id="resultContent"></div><button class="btn" onclick="location.reload()">KEMBALI KE HALAMAN AWAL</button></section>
+<section id="admin" class="panel hidden">
+<div class="topline"><div><h2>Dashboard Administrator</h2><p>Masuk menggunakan akun admin Supabase yang sudah terdaftar.</p></div><button class="btn light" id="adminClose">TUTUP</button></div>
+<div id="adminLogin">
+<div class="grid"><div class="field"><label>Email admin</label><input id="adminEmail" type="email"></div><div class="field"><label>Password</label><input id="adminPassword" type="password"></div></div>
+<div class="actions"><button class="btn" id="loginBtn">LOGIN ADMIN</button></div>
+</div><div id="adminPanel" class="hidden"><div class="actions"><button class="btn light" id="refreshAdmin">MUAT ULANG DATA</button><button class="btn light" id="logoutBtn">KELUAR</button></div><div id="adminData"></div></div><div id="adminMsg"></div>
+</section>
+</main>
+<script>
+const SUPABASE_URL="https://cpmbdmujazeahhjidbpi.supabase.co";
+const SUPABASE_ANON_KEY="TEMPEL_PUBLISHABLE_KEY_SUPABASE_DI_SINI";
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const $=id=>document.getElementById(id);
+const fn=(name,body,token)=>fetch(`${SUPABASE_URL}/functions/v1/${name}`,{method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_ANON_KEY,...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify(body)}).then(async r=>{let d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||`Permintaan gagal (${r.status})`);return d});
+let questions=[],answers={},current=0,accessToken="",deadline=0,timerHandle=null;
+function show(id){["welcome","exam","result","admin"].forEach(x=>$(x).classList.toggle("hidden",x!==id));window.scrollTo(0,0)}
+function message(id,text,kind="error"){$(id).innerHTML=`<div class="${kind}">${text}</div>`}
+function saveLocal(){localStorage.setItem("fikih_session",JSON.stringify({accessToken,questions,answers,current,deadline,identity:{name:$("name").value,klass:$("klass").value,participant_no:$("participantNo").value,school_year:$("schoolYear").value}}))}
+function render(){
+ const q=questions[current];$("progress").textContent=`Soal ${current+1} dari ${questions.length}`;$("answered").textContent=`Terjawab ${Object.keys(answers).length}/${questions.length}`;
+ const opts=[q.pilihan_a,q.pilihan_b,q.pilihan_c,q.pilihan_d];
+ $("questionArea").innerHTML=`<div class="question"><div class="qhead"><span>${q.kategori||"Soal Fikih"}</span><span>Nomor ${current+1}</span></div><div class="qtext">${q.pertanyaan}</div>${opts.map((v,i)=>`<label class="option"><input type="radio" name="answer" value="${"ABCD"[i]}" ${answers[q.id]==="ABCD"[i]?"checked":""}><b>${"ABCD"[i]}.</b><span>${v}</span></label>`).join("")}</div>`;
+ document.querySelectorAll('input[name="answer"]').forEach(el=>el.addEventListener("change",()=>{answers[q.id]=el.value;saveLocal();renderNav();$("answered").textContent=`Terjawab ${Object.keys(answers).length}/${questions.length}`}));
+ $("prevBtn").disabled=current===0;$("nextBtn").disabled=current===questions.length-1;renderNav();
+}
+function renderNav(){$("navGrid").innerHTML=questions.map((q,i)=>`<button class="${answers[q.id]?"done":""} ${i===current?"current":""}" data-i="${i}">${i+1}</button>`).join("");$("navGrid").querySelectorAll("button").forEach(b=>b.onclick=()=>{current=+b.dataset.i;render();saveLocal()})}
+function startTimer(){clearInterval(timerHandle);const tick=()=>{let left=Math.max(0,Math.ceil((deadline-Date.now())/1000));$("timer").textContent=`${String(Math.floor(left/60)).padStart(2,"0")}:${String(left%60).padStart(2,"0")}`;if(left<=0){clearInterval(timerHandle);submit(true)}};tick();timerHandle=setInterval(tick,1000)}
+$("startBtn").onclick=async()=>{try{$("startBtn").disabled=true;const body={name:$("name").value.trim(),klass:$("klass").value,participant_no:$("participantNo").value.trim(),school_year:$("schoolYear").value.trim()||"2026/2027",pin:$("examPin").value.trim()};const d=await fn("start-assessment",body);questions=d.questions;accessToken=d.access_token;answers={};current=0;deadline=Date.now()+d.duration_minutes*60000;saveLocal();show("exam");render();startTimer()}catch(e){message("welcomeMsg",e.message)}finally{$("startBtn").disabled=false}};
+$("nextBtn").onclick=()=>{if(current<questions.length-1)current++;render();saveLocal()};$("prevBtn").onclick=()=>{if(current>0)current--;render();saveLocal()};
+async function submit(auto=false){if(!auto&&!confirm(`Kumpulkan jawaban sekarang? Terjawab ${Object.keys(answers).length} dari ${questions.length}.`))return; $("submitBtn").disabled=true;try{clearInterval(timerHandle);const payload=questions.map(q=>({question_id:q.id,answer:answers[q.id]||null}));const d=await fn("submit-assessment",{access_token:accessToken,answers:payload,auto_submit:auto});localStorage.removeItem("fikih_session");const r=d.result;$("resultContent").innerHTML=`<div class="statgrid"><div class="stat">Nama<b style="font-size:18px">${r.name}</b></div><div class="stat">Benar<b>${r.correct}</b></div><div class="stat">Salah<b>${r.wrong}</b></div><div class="stat">Nilai<b>${r.score}</b></div></div><p>Nomor peserta: ${r.participant_no}<br>Belum dijawab: ${r.unanswered}<br>${auto?"Jawaban dikirim otomatis karena waktu habis.":"Jawaban berhasil dikumpulkan."}</p>`;show("result")}catch(e){message("examMsg",e.message);$("submitBtn").disabled=false}} 
+$("submitBtn").onclick=()=>submit(false);
+$("adminToggle").onclick=()=>show("admin");$("adminClose").onclick=()=>show("welcome");
+$("loginBtn").onclick=async()=>{try{$("loginBtn").disabled=true;const {data,error}=await sb.auth.signInWithPassword({email:$("adminEmail").value,password:$("adminPassword").value});if(error)throw error;await loadAdmin(data.session.access_token)}catch(e){message("adminMsg",e.message)}finally{$("loginBtn").disabled=false}};
+async function loadAdmin(token){const d=await fn("admin-data",{},token);$("adminLogin").classList.add("hidden");$("adminPanel").classList.remove("hidden");const rows=d.participants||[];const avg=rows.length?Math.round(rows.reduce((a,x)=>a+(x.score||0),0)/rows.length):0;$("adminData").innerHTML=`<div class="statgrid"><div class="stat">Peserta<b>${rows.length}</b></div><div class="stat">Selesai<b>${rows.filter(x=>x.submitted_at).length}</b></div><div class="stat">Rata-rata nilai<b>${avg}</b></div><div class="stat">Otomatis<b>${rows.filter(x=>x.auto_submitted).length}</b></div></div><p>Rekap hasil peserta</p><div style="overflow:auto"><table><thead><tr><th>Nama</th><th>Kelas</th><th>No. Peserta</th><th>Benar</th><th>Salah</th><th>Kosong</th><th>Nilai</th><th>Status</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r.name}</td><td>${r.klass}</td><td>${r.participant_no}</td><td>${r.correct??"-"}</td><td>${r.wrong??"-"}</td><td>${r.unanswered??"-"}</td><td>${r.score??"-"}</td><td>${r.submitted_at?"Selesai":"Belum selesai"}</td></tr>`).join("")}</tbody></table></div><button class="btn light" id="csvBtn" style="margin-top:14px">UNDUH CSV</button>`;$("csvBtn").onclick=()=>{const cols=["name","klass","participant_no","correct","wrong","unanswered","score","submitted_at"];const csv=[cols.join(","),...rows.map(r=>cols.map(c=>JSON.stringify(r[c]??"")).join(","))].join("\\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="rekap-asesmen-fikih.csv";a.click()}}
+$("refreshAdmin").onclick=async()=>{const {data}=await sb.auth.getSession();if(data.session)try{await loadAdmin(data.session.access_token)}catch(e){message("adminMsg",e.message)}};
+$("logoutBtn").onclick=async()=>{await sb.auth.signOut();$("adminLogin").classList.remove("hidden");$("adminPanel").classList.add("hidden")};
+window.addEventListener("load",()=>{const raw=localStorage.getItem("fikih_session");if(raw){try{const s=JSON.parse(raw);accessToken=s.accessToken;questions=s.questions;answers=s.answers||{};current=s.current||0;deadline=s.deadline; if(deadline>Date.now()&&questions.length){$("name").value=s.identity.name;$("klass").value=s.identity.klass;$("participantNo").value=s.identity.participant_no;$("schoolYear").value=s.identity.school_year;show("exam");render();startTimer()}else localStorage.removeItem("fikih_session")}catch{localStorage.removeItem("fikih_session")}}});
+</script></body></html>
