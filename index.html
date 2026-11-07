@@ -46,7 +46,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;b
 <section id="admin" class="panel hidden">
 <div class="topline"><div><h2>Dashboard Administrator</h2><p>Masuk menggunakan akun admin Supabase yang sudah terdaftar.</p></div><button class="btn light" id="adminClose">TUTUP</button></div>
 <div id="adminLogin">
-<div class="grid"><div class="field"><label>Email admin</label><input id="adminEmail" type="email"></div><div class="field"><label>Password</label><input id="adminPassword" type="password"></div></div>
+<div class="grid"><div class="field"><label>Kode Admin</label><input id="adminPin" type="password" inputmode="numeric" autocomplete="off" placeholder="Masukkan kode admin"></div></div>
 <div class="actions"><button class="btn" id="loginBtn">LOGIN ADMIN</button></div>
 </div><div id="adminPanel" class="hidden"><div class="actions"><button class="btn light" id="refreshAdmin">MUAT ULANG DATA</button><button class="btn light" id="logoutBtn">KELUAR</button></div><div id="adminData"></div></div><div id="adminMsg"></div>
 </section>
@@ -98,9 +98,91 @@ $("nextBtn").onclick=()=>{if(current<questions.length-1)current++;render();saveL
 async function submit(auto=false){if(!auto&&!confirm(`Kumpulkan jawaban sekarang? Terjawab ${Object.keys(answers).length} dari ${questions.length}.`))return; $("submitBtn").disabled=true;try{clearInterval(timerHandle);const payload=questions.map(q=>({question_id:q.id,answer:answers[q.id]||null}));const d=await fn("submit-assessment",{access_token:accessToken,answers:payload,auto_submit:auto});localStorage.removeItem("fikih_session");const r=d.result;$("resultContent").innerHTML=`<div class="statgrid"><div class="stat">Nama<b style="font-size:18px">${r.name}</b></div><div class="stat">Benar<b>${r.correct}</b></div><div class="stat">Salah<b>${r.wrong}</b></div><div class="stat">Nilai<b>${r.score}</b></div></div><p>Nomor peserta: ${r.participant_no}<br>Belum dijawab: ${r.unanswered}<br>${auto?"Jawaban dikirim otomatis karena waktu habis.":"Jawaban berhasil dikumpulkan."}</p>`;show("result")}catch(e){message("examMsg",e.message);$("submitBtn").disabled=false}} 
 $("submitBtn").onclick=()=>submit(false);
 $("adminToggle").onclick=()=>show("admin");$("adminClose").onclick=()=>show("welcome");
-$("loginBtn").onclick=async()=>{try{$("loginBtn").disabled=true;const {data,error}=await sb.auth.signInWithPassword({email:$("adminEmail").value,password:$("adminPassword").value});if(error)throw error;await loadAdmin(data.session.access_token)}catch(e){message("adminMsg",e.message)}finally{$("loginBtn").disabled=false}};
-async function loadAdmin(token){const d=await fn("admin-data",{},token);$("adminLogin").classList.add("hidden");$("adminPanel").classList.remove("hidden");const rows=d.participants||[];const avg=rows.length?Math.round(rows.reduce((a,x)=>a+(x.score||0),0)/rows.length):0;$("adminData").innerHTML=`<div class="statgrid"><div class="stat">Peserta<b>${rows.length}</b></div><div class="stat">Selesai<b>${rows.filter(x=>x.submitted_at).length}</b></div><div class="stat">Rata-rata nilai<b>${avg}</b></div><div class="stat">Otomatis<b>${rows.filter(x=>x.auto_submitted).length}</b></div></div><p>Rekap hasil peserta</p><div style="overflow:auto"><table><thead><tr><th>Nama</th><th>Kelas</th><th>No. Peserta</th><th>Benar</th><th>Salah</th><th>Kosong</th><th>Nilai</th><th>Status</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r.name}</td><td>${r.klass}</td><td>${r.participant_no}</td><td>${r.correct??"-"}</td><td>${r.wrong??"-"}</td><td>${r.unanswered??"-"}</td><td>${r.score??"-"}</td><td>${r.submitted_at?"Selesai":"Belum selesai"}</td></tr>`).join("")}</tbody></table></div><button class="btn light" id="csvBtn" style="margin-top:14px">UNDUH CSV</button>`;$("csvBtn").onclick=()=>{const cols=["name","klass","participant_no","correct","wrong","unanswered","score","submitted_at"];const csv=[cols.join(","),...rows.map(r=>cols.map(c=>JSON.stringify(r[c]??"")).join(","))].join("\\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="rekap-asesmen-fikih.csv";a.click()}}
-$("refreshAdmin").onclick=async()=>{const {data}=await sb.auth.getSession();if(data.session)try{await loadAdmin(data.session.access_token)}catch(e){message("adminMsg",e.message)}};
-$("logoutBtn").onclick=async()=>{await sb.auth.signOut();$("adminLogin").classList.remove("hidden");$("adminPanel").classList.add("hidden")};
+$("loginBtn").onclick=async()=>{
+  try{
+    $("loginBtn").disabled=true;
+    await loadAdmin($("adminPin").value);
+  }catch(e){
+    message("adminMsg",e.message);
+  }finally{
+    $("loginBtn").disabled=false;
+  }
+};
+
+async function loadAdmin(pin){
+  const d = await fn("admin-data",{pin});
+
+  $("adminLogin").classList.add("hidden");
+  $("adminPanel").classList.remove("hidden");
+
+  const rows = d.participants || [];
+  const avg = rows.length
+    ? Math.round(rows.reduce((a,x)=>a+(x.score||0),0)/rows.length)
+    : 0;
+
+  $("adminData").innerHTML = `
+    <div class="statgrid">
+      <div class="stat">Peserta<b>${rows.length}</b></div>
+      <div class="stat">Selesai<b>${rows.filter(x=>x.submitted_at).length}</b></div>
+      <div class="stat">Rata-rata nilai<b>${avg}</b></div>
+      <div class="stat">Otomatis<b>${rows.filter(x=>x.auto_submitted).length}</b></div>
+    </div>
+    <p>Rekap hasil peserta</p>
+    <div style="overflow:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Nama</th><th>Kelas</th><th>No. Peserta</th>
+            <th>Benar</th><th>Salah</th><th>Kosong</th>
+            <th>Nilai</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(r=>`
+            <tr>
+              <td>${r.name}</td>
+              <td>${r.klass}</td>
+              <td>${r.participant_no}</td>
+              <td>${r.correct??"-"}</td>
+              <td>${r.wrong??"-"}</td>
+              <td>${r.unanswered??"-"}</td>
+              <td>${r.score??"-"}</td>
+              <td>${r.submitted_at?"Selesai":"Belum selesai"}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+    <button class="btn light" id="csvBtn" style="margin-top:14px">
+      UNDUH CSV
+    </button>
+  `;
+
+  $("csvBtn").onclick=()=>{
+    const cols=["name","klass","participant_no","correct","wrong","unanswered","score","submitted_at"];
+    const csv=[
+      cols.join(","),
+      ...rows.map(r=>cols.map(c=>JSON.stringify(r[c]??"")).join(","))
+    ].join("\n");
+
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+    a.download="rekap-asesmen-fikih.csv";
+    a.click();
+  };
+}
+
+$("refreshAdmin").onclick=async()=>{
+try{
+await loadAdmin($("adminPin").value);
+}catch(e){
+message("adminMsg",e.message);
+}
+};
+$("logoutBtn").onclick=()=>{
+$("adminPanel").classList.add("hidden");
+$("adminLogin").classList.remove("hidden");
+$("adminPin").value="";
+};
 window.addEventListener("load",()=>{const raw=localStorage.getItem("fikih_session");if(raw){try{const s=JSON.parse(raw);accessToken=s.accessToken;questions=s.questions;answers=s.answers||{};current=s.current||0;deadline=s.deadline; if(deadline>Date.now()&&questions.length){$("name").value=s.identity.name;$("klass").value=s.identity.klass;$("participantNo").value=s.identity.participant_no;$("schoolYear").value=s.identity.school_year;show("exam");render();startTimer()}else localStorage.removeItem("fikih_session")}catch{localStorage.removeItem("fikih_session")}}});
 </script></body></html>
